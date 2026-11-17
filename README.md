@@ -20,7 +20,17 @@ Escanea el QR que aparece en la terminal con Expo Go. Para probar rápido: regí
 
 Para verla en el navegador: `npx expo start --web`.
 
-## Generar el APK para instalar en Android
+## Instalar en un celular Android (APK)
+
+Cada vez que se suben cambios a `main`, GitHub compila un APK automáticamente (también se puede lanzar a mano en **Actions › Compilar APK Android › Run workflow**).
+
+1. Desde el celular, abre la sección **Releases** del repositorio y entra a la versión más reciente.
+2. Toca el archivo `CobroYa-….apk` para descargarlo.
+3. Ábrelo desde Descargas y toca **Instalar**. Si Android lo pide, permite instalar apps de este origen.
+
+Es un APK de prueba firmado con la llave de desarrollo; para Play Store se usa el perfil `production` de EAS (abajo).
+
+## Generar el APK con EAS (alternativa)
 
 ```bash
 npm install -g eas-cli
