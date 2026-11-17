@@ -1,0 +1,75 @@
+# Compila un APK de Android instalable y lo publica como "Release" en GitHub.
+# Se ejecuta a mano (Actions › Compilar APK Android › Run workflow) o al subir cambios a main.
+name: Compilar APK Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'supabase/**']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Revisar tipos y reglas de negocio
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Generar proyecto Android
+        run: npx expo prebuild --platform android --no-install
+        env:
+          EXPO_NO_TELEMETRY: 1
+
+      - name: Compilar APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Nombrar APK
+        run: |
+          VERSION=$(node -p "require('./app.json').expo.version")
+          mkdir -p salida
+          cp android/app/build/outputs/apk/release/app-release.apk "salida/CobroYa-${VERSION}-${GITHUB_RUN_NUMBER}.apk"
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CobroYa-apk
+          path: salida/*.apk
+
+      - name: Publicar Release para descargar desde el celular
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="apk-${VERSION}-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" salida/*.apk \
+            --target "$GITHUB_SHA" \
+            --title "CobroYa ${VERSION} (prueba #${GITHUB_RUN_NUMBER})" \
+            --prerelease \
+            --notes "APK de prueba de CobroYa. Ábrelo desde tu celular Android y toca el archivo .apk para instalarlo. Si Android lo pide, permite instalar apps de origen desconocido."
