@@ -1,11 +1,11 @@
 # Compila un APK de Android instalable y lo publica como "Release" en GitHub.
-# Se ejecuta a mano (Actions › Compilar APK Android › Run workflow) o al subir cambios a main.
+# Se ejecuta a mano (Actions › Compilar APK Android › Run workflow) o al subir cambios a main o a una rama claude/*.
 name: Compilar APK Android
 
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, 'claude/**']
     paths-ignore: ['**.md', 'supabase/**']
 
 permissions:
